@@ -85,7 +85,7 @@ class SignUpToClient
     end
 
     # Mandatory attributes passed as arguments
-    attributes = subscriber_attr.clone
+    attributes              = subscriber_attr.clone
     attributes['email']     = subscriber_email
     attributes['list_id']   = list_id
     attributes['confirmed'] = confirmed ? 1 : 0
@@ -110,7 +110,7 @@ class SignUpToClient
     end
 
     # Mandatory attributes passed as arguments
-    attributes = subscriber_attr.clone
+    attributes       = subscriber_attr.clone
     attributes['id'] = subscriber_id
 
     api_res = request 'put', 'subscriber', :body => attributes
@@ -218,9 +218,9 @@ class SignUpToClient
       raise 'You must provide at least one of the required identifiers'
     end
 
-    attributes                    = {}
-    attributes['id'] = id if id > 0
-    attributes['subscriber_id'] = subscriber_id if subscriber_id > 0
+    attributes                              = {}
+    attributes['id']                        = id if id > 0
+    attributes['subscriber_id']             = subscriber_id if subscriber_id > 0
     attributes['subscriberprofilefield_id'] = profile_field_id if profile_field_id > 0
 
     api_res = request 'get', 'subscriberProfileData', :query => attributes
@@ -253,6 +253,56 @@ class SignUpToClient
 
       request 'post', 'subscriberProfileData', :body => attributes
     end
+  end
+
+  def get_email_transaction(id: 0, subscriber_id: 0, subscriber_email: '', completed: nil, error: nil, get_first: false)
+    attributes                  = {}
+
+    attributes['id']            = id if id > 0
+    attributes['subscriber_id'] = subscriber_id if subscriber_id > 0
+    attributes['email']         = subscriber_email unless subscriber_email.empty?
+    attributes['completed']     = (completed ? 'true' : 'false') unless completed.nil? # note: this seems broken at the moment
+    attributes['error']         = (error ? 'true' : 'false') unless error.nil?
+
+    api_res = request 'get', 'emailTransaction', :query => attributes
+
+    if api_res && api_res['status'] == STATUS_OK
+      res = api_res['response']['data']
+    elsif api_res['status'] == STATUS_ERROR && api_res['response']['code'] == 404
+      res = {}
+    else
+      raise "Unexpected error: \n#{api_res.inspect}"
+    end
+
+    if !get_first && res.kind_of?(Hash)
+      res = (res.empty? ? [] : [res])
+    elsif get_first && res.kind_of?(Array)
+      res = res[0]
+    end
+
+    res
+  end
+
+  def create_email_transaction(subscriber_id = 0, subscriber_email = '', email_attr: {})
+
+    if subscriber_id <= 0 && subscriber_email.empty?
+      raise 'You must provide at least the subscriber id or email address of the recipient'
+    end
+
+    attributes                  = email_attr.clone
+    attributes['subscriber_id'] = subscriber_id if subscriber_id > 0
+    attributes['email']         = subscriber_email unless subscriber_email.empty?
+
+    api_res = request 'post', 'emailTransaction', :body => attributes
+
+    res = false
+    if api_res && api_res['status'] == STATUS_OK
+      res = api_res['response']['data']
+    elsif api_res['status'] == STATUS_ERROR
+      raise "Unexpected error: \n#{api_res.inspect}"
+    end
+
+    res
   end
 
 # ----------
