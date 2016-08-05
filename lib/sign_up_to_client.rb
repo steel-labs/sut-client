@@ -245,14 +245,18 @@ class SignUpToClient
       raise 'Please provide the subscriber_id and a valid set of data'
     end
 
+    res = {}
+
     data.each do |field_id, value|
       attributes                              = {}
       attributes['subscriber_id']             = subscriber_id
       attributes['subscriberprofilefield_id'] = field_id
       attributes['value']                     = value
 
-      request 'post', 'subscriberProfileData', :body => attributes
+      res[field_id] = request 'put', 'subscriberProfileData', :body => attributes
     end
+
+    res
   end
 
   def get_email_transaction(id: 0, subscriber_id: 0, subscriber_email: '', completed: nil, error: nil, get_first: false)
