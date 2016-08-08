@@ -5,7 +5,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'sign_up_to_client/version'
 
 Gem::Specification.new do |s|
-  s.name          = 'sut-client'
+  s.name          = 'sign_up_to_client'
   s.version       = SignUpToClient::VERSION
   s.authors       = ['Giovanni Derks', 'Raffaele Abramini']
   s.email         = ['giovanni.derks@steellondon.com', 'raffaele.abramini@steellondon.com']
