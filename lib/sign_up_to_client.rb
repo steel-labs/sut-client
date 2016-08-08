@@ -35,6 +35,11 @@ class SignUpToClient
     self.class.base_uri "https://#{SERVER}/v#{VERSION}"
   end
 
+  def get_account(id = 0)
+    endpoint = "account#{(id > 0 ? "/#{id}" : '')}"
+    request 'get', endpoint
+  end
+
   def get_folder(id = 0)
     endpoint = "folder#{(id > 0 ? "/#{id}" : '')}"
     request 'get', endpoint
@@ -65,6 +70,24 @@ class SignUpToClient
 
     if api_res && api_res['status'] == STATUS_OK
       res = api_res['response']['data'][0]
+    elsif api_res['status'] == STATUS_ERROR && api_res['response']['code'] == 404
+      res = {}
+    else
+      raise "Unexpected error: \n#{api_res.inspect}"
+    end
+
+    res
+  end
+
+  def list_subscribers(list_id = 0, filters = {})
+
+    attributes              = filters.clone
+    attributes['list_id']   = list_id if list_id > 0
+
+    api_res = request 'get', 'subscriber', :query => attributes
+
+    if api_res && api_res['status'] == STATUS_OK
+      res = api_res['response']
     elsif api_res['status'] == STATUS_ERROR && api_res['response']['code'] == 404
       res = {}
     else
