@@ -147,6 +147,29 @@ class SignUpToClient
     res
   end
 
+
+# @param [Integer] subscriber_id
+# @return [Object] response
+  def delete_subscriber(subscriber_id)
+    unless subscriber_id > 0
+      raise 'Please specify the subscriber_id'
+    end
+
+    # Mandatory attributes passed as arguments
+    attributes       = {}
+    attributes['id'] = subscriber_id
+
+    api_res = request 'delete', 'subscriber', :query => attributes
+
+    if api_res && api_res['status'] == STATUS_OK
+      res = api_res['response']['data']
+    else
+      raise "Unexpected error: \n#{api_res.inspect}"
+    end
+
+    res
+  end
+
 # @param [Integer] subscription_id
 # @param [Integer] subscriber_id
 # @param [Integer] list_id
@@ -385,6 +408,13 @@ class SignUpToClient
         )
       when 'put'
         response = self.class.put(
+            "/#{endpoint}",
+            :headers => headers,
+            :query   => query,
+            :body    => body
+        )
+      when 'delete'
+        response = self.class.delete(
             "/#{endpoint}",
             :headers => headers,
             :query   => query,
