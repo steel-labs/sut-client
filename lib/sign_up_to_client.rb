@@ -22,6 +22,16 @@ class SignUpToClient
     end
   end
 
+  class DoNotContactExistsError < StandardError
+    attr_reader :id
+
+    def initialize(id)
+      @id = id
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+
   SERVER       = 'api.sign-up.to'
   VERSION      = '1'
   STATUS_OK    = 'ok'
@@ -349,6 +359,68 @@ class SignUpToClient
     if api_res && api_res['status'] == STATUS_OK
       res = api_res['response']['data']
     elsif api_res['status'] == STATUS_ERROR
+      raise "Unexpected error: \n#{api_res.inspect}"
+    end
+
+    res
+  end
+
+  def get_do_not_contact(id=0, contact_data='')
+    attributes = {}
+    attributes['id']          = id if id > 0
+    attributes['contactdata'] = contact_data unless contact_data.empty?
+
+    api_res = request 'get', 'doNotContact', :query => attributes
+
+    if api_res && api_res['status'] == STATUS_OK
+      res = api_res['response']['data']
+    elsif api_res['status'] == STATUS_ERROR && api_res['response']['code'] == 404
+      res = []
+    else
+      raise "Unexpected error: \n#{api_res.inspect}"
+    end
+
+    res
+  end
+
+  def add_to_do_not_contact(contact_data)
+    if contact_data.empty?
+      raise 'Please specify a valid contact_data'
+    end
+
+    attributes = {}
+    attributes['contactdata'] = contact_data
+
+    api_res = request 'post', 'doNotContact', :body => attributes
+
+    res = false
+    if api_res && api_res['status'] == STATUS_OK
+      res = api_res['response']['data']
+    elsif api_res['status'] == STATUS_ERROR && api_res['response']['code'] == 409
+      raise DoNotContactExistsError.new(api_res['response']['resource_id']), api_res['response']['message']
+    elsif api_res['status'] == STATUS_ERROR
+      raise "Unexpected error: \n#{api_res.inspect}"
+    end
+
+    res
+  end
+
+  def remove_from_do_not_contact(id=0, contact_data='')
+    if id <= 0 && contact_data.empty?
+      raise 'You must provide at least the id or the email address/MSISDN'
+    end
+
+    attributes = {}
+    attributes['id']          = id if id > 0
+    attributes['contactdata'] = contact_data unless contact_data.empty?
+
+    api_res = request 'delete', 'doNotContact', :query => attributes
+
+    if api_res && api_res['status'] == STATUS_OK
+      res = api_res['response']['data']
+    elsif api_res['status'] == STATUS_ERROR && api_res['response']['code'] == 404
+      res = []
+    else
       raise "Unexpected error: \n#{api_res.inspect}"
     end
 
